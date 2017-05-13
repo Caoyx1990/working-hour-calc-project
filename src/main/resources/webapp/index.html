@@ -5,6 +5,11 @@
 <title>Caoyx</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"/>
 <!-- <link rel="stylesheet" href="./thirdPart/bootstrap.min.css"/> -->
+<style>
+  .timeInput {
+    margin-bottom: 10px;
+  }
+</style>
 </head>
 <body>
     <div>
@@ -17,12 +22,13 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">曹宇轩</a>
+            <a class="navbar-brand" href="#">工时查询</a>
           </div>
           <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
               <li class="active"><a href="#">计算工时</a></li>
               <li><a href="#">查询节假日</a></li>
+              <li><a href="#">图表显示</a></li>
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">caoyuxuan<span class="caret"></span></a>
                 <ul class="dropdown-menu" role="menu">
@@ -37,13 +43,125 @@
         </div>
       </div>
     </div>
-    <div class="h1">
-    	<span>欢迎使用工时计算系统</span>
+    <!--<div class="h1">-->
+    	<!--<span>欢迎使用工时计算系统</span>-->
+    <!--</div>-->
+    <div class="container calcHour">
+      <form class="form-inline">
+        <!--<div class="btn-toolbar">
+          <div class="btn-group">
+            <button type="button" class="btn btn-default" id="add">添加</button>
+            <button type="button" class="btn btn-default" id="delete">删除</button>
+          </div>
+        </div>-->
+        <div class="timeInput">
+          <div class="form-group">
+            <label for="workingDate">日期</label>
+            <input type="date" class="form-control" id="workingDate" placeholder="请输入打卡日期">
+          </div>
+          <div class="form-group">
+            <label  for="startTime">上班时间</label>
+            <input type="time" class="form-control" id="startTime" placeholder="请输入上班打卡时间">
+          </div>
+          <div class="form-group">
+            <label  for="startTime">下班时间</label>
+            <input type="time" class="form-control" id="endTime" placeholder="请输入下班打卡时间">
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-default" id="add">添加</button>
+          </div>
+        </div>
+        <table class="table table-striped table-bordered table-hover" id="workingTimeTable">
+          <thead>
+          <tr>
+            <td>序号</td>
+            <td>日期</td>
+            <td>星期</td>
+            <td>上班时间</td>
+            <td>下班时间</td>
+            <td>当天工时</td>
+            <td>备注</td>
+          </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>2017-05-05</td>
+              <td>星期五</td>
+              <td>08:46</td>
+              <td>17:49</td>
+              <td>7.23</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </form>
     </div>
-      
 </body>
 <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script>
+  $(document).ready(
+    $("#add").click(function () {
+      var workingInfo = addSingleDayTime();
+      if (!workingInfo.workingDate && !workingInfo.weekday
+              && !workingInfo.startTime && !workingInfo.endTime
+              && workingInfo.workingTime !== NaN) {
+        return;
+      }
+      $("#workingTimeTable tbody").append("<tr><td>2</td><td>" + workingInfo.workingDate + "</td>" +
+              "<td>" + workingInfo.weekday + "</td><td>" + workingInfo.startTime + "</td><td>"
+              + workingInfo.endTime + "</td><td>" + workingInfo.workingTime + "<td></td></tr>")
+    })
+  );
+  function addSingleDayTime() {
+    var weekDays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+    var workingDate = $("#workingDate").val();
+    var startTime = $("#startTime").val();
+    var endTime = $("#endTime").val();
+    console.log(workingDate + ", startTime : " + startTime + " ; " + "endTime : " + endTime);
+    var weekday = new Date(workingDate).getDay();
+    var workingTime = calcWorkingHour(workingDate, startTime, endTime);
+    return {
+      "workingDate" : workingDate,
+      "startTime" : startTime,
+      "endTime": endTime,
+      "weekday": weekDays[weekday],
+      "workingTime": workingTime
+    };
+  }
+
+  function calcWorkingHour(workingDate, startTime, endTime) {
+    workingDate = workingDate.replace(/\-/g, "/");
+    var middleStartTime = new Date(workingDate + " 12:30:00");
+    var middleEndTime = new Date(workingDate + " 14:00:00");
+    var noonStartTime = new Date(workingDate + " 17:30:00");
+    var noonEndTime = new Date(workingDate + " 18:00:00");
+    startTime = new Date(workingDate + " " + startTime);
+    endTime = new Date(workingDate + " " + endTime);
+    var amTime = middleStartTime.getTime() - startTime.getTime();
+    var pmTime;
+    if (endTime.getTime() >= noonStartTime.getTime() && endTime.getTime() <= noonEndTime.getTime()) {
+      pmTime = noonStartTime.getTime() - middleEndTime.getTime();
+    } else if (endTime.getTime() > noonEndTime.getTime()) {
+      pmTime = noonStartTime.getTime() - middleEndTime.getTime();
+      pmTime += endTime.getTime() - noonEndTime.getTime();
+    }
+    return calcHourMinSec(amTime + pmTime)
+  }
+
+  function calcHourMinSec(times) {
+    //计算相差小时数
+    var leave1=times%(24*3600*1000);    //计算天数后剩余的毫秒数
+    var hours=Math.floor(leave1/(3600*1000));
+    //计算相差分钟数
+    var leave2=leave1%(3600*1000) ;       //计算小时数后剩余的毫秒数
+    var minutes=Math.floor(leave2/(60*1000));
+    console.log("hours: " + hours + ", minutes: " + minutes);
+    return parseFloat(hours) + parseFloat((minutes/60).toFixed(2));
+  }
+
+</script>
 <!-- <script src="./thirdPart/jquery-3.1.1-min.js"></script>
 <script src="./thirdPart/bootstrap.min.js"></script> -->
 </html>

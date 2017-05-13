@@ -11,7 +11,7 @@ public class Application {
 
     @RequestMapping("/")
     String home() {
-        return "Hello World!";
+        return "index";
     }
 
     public static void main(String[] args) throws Exception {
