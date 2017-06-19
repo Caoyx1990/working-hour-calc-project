@@ -2,6 +2,29 @@
  * Created by caoyx on 2017/5/15 0015.
  */
 $(document).ready(
+
+    $('.form_date').datetimepicker({
+        language:  'zh-CN',
+        weekStart: 1,
+        todayBtn:  1,
+        autoclose: 1,
+        todayHighlight: 1,
+        startView: 2,
+        minView: 2,
+        forceParse: 0
+    }),
+    $('.form_time').datetimepicker({
+        language:  'zh-CN',
+        weekStart: 1,
+        todayBtn:  1,
+        autoclose: 1,
+        todayHighlight: 1,
+        startView: 1,
+        minView: 0,
+        maxView: 1,
+        forceParse: 0
+    }),
+
     $("#add").click(function () {
         var workingInfo = addSingleDayTime();
         if (!workingInfo.workingDate && !workingInfo.weekday
